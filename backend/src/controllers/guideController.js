@@ -1,6 +1,6 @@
 import Guide from "../models/guideModel.js";
 
-export const createGuiderProfile = async (req, res) => {
+export const createGuideProfile = async (req, res) => {
     try { 
         //logged in user info
         const userId = req.user.id;
@@ -59,5 +59,22 @@ export const createGuiderProfile = async (req, res) => {
     } catch (error){
         console.error("Guide profile error:", error.message);
         res.status(500).json({message: "Server error"});
+    }
+};
+
+
+export const getAllGuides = async (req, res) => {
+    try {
+        const guides = await Guide.find()
+        .populate("user", "name verificationTier")
+        .sort({ created: -1 });
+
+        res.json({
+            count: guides.length,
+            guides,
+        });
+    } catch (error) {
+        console.error("Get guides error:", error.message);
+        res.status(500).json({ message: "Server error"});
     }
 };
