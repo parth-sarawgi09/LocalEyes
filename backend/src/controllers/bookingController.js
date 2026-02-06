@@ -73,3 +73,50 @@ export const getGuideBookings = async (req, res) => {
     res.status(500).json({message: "Server error"});
   }
 };
+
+
+// here guide will either accept or reject the booking request
+export const updateBookingStatus = async (req, res) => {
+  try{
+    //only guide allowed
+    if(req.user.role !== "guide"){
+      return res.status(403).json({message:"only guides can update"})
+    }
+
+    const {bookingId} = req.params;
+    const {status} = req.body;
+
+    if(!["confirmed", "cancelled"].includes(status)){
+      return res.status(400).json({message: "invalid status response"})
+    }
+
+    //find guide profile
+    const guide = await Guide.findOne({user: req.user.id});
+    if(!guide){
+      return res.status(404).json({message: "guide profile not found"})
+    }
+
+    //find booking that belong to this guide
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      guide: guide._id,
+      status: "pending",
+    });
+
+    if(!booking){
+      return res.status(404).json({message: "BOOKing not found"})
+    }
+
+    booking.status = status;
+    await booking.save();
+
+    res.json({
+      message: `Booking ${status}`,
+      booking,
+    });
+    
+  }catch(error){
+    console.error("Update booking eror:", error.message);
+    res.status(500),json({message: "Server error"})
+  }
+};
